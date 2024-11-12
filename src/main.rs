@@ -1,7 +1,22 @@
 use home::home_dir;
+use serde_derive::Deserialize;
 use std::{env, fs, io};
 
-struct Config {}
+#[derive(Deserialize, Debug)]
+struct Config {
+    general: Option<General>,
+    dailyNotes: Option<DailyNotes>,
+}
+
+#[derive(Deserialize, Debug)]
+struct General {
+    editor_command: Option<String>,
+}
+
+#[derive(Deserialize, Debug)]
+struct DailyNotes {
+    daily_notes_dir: Option<String>,
+}
 
 #[derive(Debug)]
 enum RunningMode {
@@ -33,7 +48,9 @@ fn main() -> io::Result<()> {
         _ => {}
     }
     // begin config process
-    let _config = load_config()?;
+    let config = load_config()?;
+
+    println!("{:?}", config);
 
     // load data depending on config
 
@@ -63,7 +80,15 @@ fn load_config() -> Result<Config, io::Error> {
             if config_path.exists() {
                 // yes
                 println!("config file found");
-                return Ok(Config {});
+                let contents = fs::read_to_string(config_path)?;
+
+                let config: Config = match toml::from_str(&contents) {
+                    Ok(c) => c,
+                    Err(e) => {
+                        return Err(io::Error::other(e.to_string()));
+                    }
+                };
+                return Ok(config);
             } else {
                 err_str = format!("Config file not found at {:?}", config_path);
             }
