@@ -1,57 +1,33 @@
 use home::home_dir;
-use serde_derive::Deserialize;
 use std::{env, fs, io};
 
-#[derive(Deserialize, Debug)]
-struct Config {
-    general: General,
-    daily_notes: DailyNotes,
-}
+mod config;
+mod daily_notes;
 
-#[derive(Deserialize, Debug)]
-struct General {
-    editor_command: Option<String>,
-}
-
-#[derive(Deserialize, Debug)]
-struct DailyNotes {
-    daily_notes_dir: Option<String>,
-}
+use config::Config;
 
 #[derive(Debug)]
 enum RunningMode {
     Config,
+    DailyNotes,
     Other,
 }
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
-    let running_mode = handle_args(args);
+    let running_mode = handle_arg(args.get(0));
     dbg!(&running_mode);
 
     match running_mode {
-        RunningMode::Config => {
-            // load the file and prompt the user to populate required fields
-            println!("starting config setting section");
-            println!("Creating config file");
-            match home_dir() {
-                Some(home) => {
-                    let dir_path = home.join(".config").join("grimoire");
-                    let file_path = dir_path.join("config.toml");
-                    fs::create_dir_all(dir_path)?;
-                    fs::File::create(file_path)?;
-                }
-                None => {}
-            }
-
-            return Ok(());
-        }
+        RunningMode::Config => {}
+        RunningMode::DailyNotes => {}
         _ => {}
     }
     // begin config process
-    let config = load_config()?;
+    let config = Config::load()?;
 
     println!("{:?}", config);
+    println!("{}", toml::to_string(&config).unwrap());
 
     // load data depending on config
 
@@ -60,44 +36,17 @@ fn main() -> io::Result<()> {
     Ok(())
 }
 
-fn handle_args(args: Vec<String>) -> RunningMode {
-    dbg!(&args);
-    match args.get(1) {
+fn handle_arg(arg: Option<&String>) -> RunningMode {
+    dbg!(arg);
+    match arg {
         Some(val) => {
-            if val == "config" {
-                return RunningMode::Config;
+            return match &val[..] {
+                "config" => RunningMode::Config,
+                "dailyNotes" => RunningMode::DailyNotes,
+                _ => RunningMode::Other,
             }
         }
         None => {}
     }
     return RunningMode::Other;
-}
-
-fn load_config() -> Result<Config, io::Error> {
-    let err_str;
-    match home_dir() {
-        Some(home) => {
-            let config_path = home.join(".config").join("grimoire").join("config.toml");
-            if config_path.exists() {
-                // yes
-                println!("config file found");
-                let contents = fs::read_to_string(config_path)?;
-
-                let config: Config = match toml::from_str(&contents) {
-                    Ok(c) => c,
-                    Err(e) => {
-                        return Err(io::Error::other(e.to_string()));
-                    }
-                };
-                return Ok(config);
-            } else {
-                err_str = format!("Config file not found at {:?}", config_path);
-            }
-        }
-        None => {
-            err_str = format!("Could not determine home directory");
-        }
-    }
-
-    return Err(io::Error::other(err_str));
 }
