@@ -4,8 +4,8 @@ use std::{env, fs, io};
 
 #[derive(Deserialize, Debug)]
 struct Config {
-    general: Option<General>,
-    dailyNotes: Option<DailyNotes>,
+    general: General,
+    daily_notes: DailyNotes,
 }
 
 #[derive(Deserialize, Debug)]
@@ -31,6 +31,7 @@ fn main() -> io::Result<()> {
 
     match running_mode {
         RunningMode::Config => {
+            // load the file and prompt the user to populate required fields
             println!("starting config setting section");
             println!("Creating config file");
             match home_dir() {
