@@ -1,10 +1,10 @@
-use home::home_dir;
-use std::{env, fs, io};
+use std::{env, io};
 
 mod config;
 mod daily_notes;
 
 use config::Config;
+use daily_notes::DailyNotes;
 
 #[derive(Debug)]
 enum RunningMode {
@@ -15,15 +15,21 @@ enum RunningMode {
 
 fn main() -> io::Result<()> {
     let args: Vec<String> = env::args().collect();
-    let running_mode = handle_arg(args.get(0));
+    let running_mode = handle_arg(args.get(1));
     dbg!(&running_mode);
 
     match running_mode {
         RunningMode::Config => {}
-        RunningMode::DailyNotes => {}
+        RunningMode::DailyNotes => {
+            let dnc = DailyNotes {
+                dir: Some("~/hub/notes/06-Daily/".to_string()),
+            };
+            DailyNotes::handle(dnc, args[1..].to_vec());
+        }
         _ => {}
     }
     // begin config process
+    return Ok(());
     let config = Config::load()?;
 
     println!("{:?}", config);

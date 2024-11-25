@@ -1,6 +1,9 @@
 use home::home_dir;
 use serde_derive::{Deserialize, Serialize};
-use std::{fs, io};
+use std::{
+    fs,
+    io::{self, Write},
+};
 
 use crate::daily_notes::DailyNotes;
 
@@ -18,6 +21,10 @@ pub struct General {
 impl Config {
     pub fn handle(&self, args: Vec<String>) -> io::Result<()> {
         // load the file and prompt the user to populate required fields
+        Ok(())
+    }
+
+    pub fn create() -> io::Result<()> {
         println!("starting config setting section");
         println!("Creating config file");
         match home_dir() {
@@ -25,12 +32,23 @@ impl Config {
                 let dir_path = home.join(".config").join("grimoire");
                 let file_path = dir_path.join("config.toml");
                 fs::create_dir_all(dir_path)?;
-                fs::File::create(file_path)?;
+                let mut file = fs::File::create(file_path)?;
+                let c = Config::generate_empty();
+                let c_str = toml::to_string(&c).unwrap();
+                file.write_all(c_str.as_bytes())?;
             }
             None => {}
         }
 
         return Ok(());
+    }
+
+    fn generate_empty() -> Config {
+        let c = Config {
+            general: None,
+            daily_notes: None,
+        };
+        return c;
     }
 
     pub fn load() -> Result<Config, io::Error> {
