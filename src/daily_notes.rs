@@ -1,6 +1,7 @@
 use chrono::{Datelike, Local, Timelike};
+use home::home_dir;
 use serde_derive::{Deserialize, Serialize};
-use std::collections::HashMap;
+use std::{collections::HashMap, fs};
 
 #[derive(Deserialize, Serialize, Debug)]
 pub struct DailyNotes {
@@ -22,15 +23,6 @@ impl DailyNotes {
         let arg = Self::handle_arg(args.get(0));
         println!("detected arg: {:?}", arg);
 
-        match daily_notes_config.dir {
-            Some(d) => {
-                println!("config dir is: {:?}", d);
-            }
-            None => {
-                println!("config dir not found");
-            }
-        }
-
         let now = Local::now();
 
         let year = now.year();
@@ -51,10 +43,22 @@ impl DailyNotes {
             .name();
 
         let filename = format!("{0}{1}{2}-{3}", year - 2000, month, day_of_month, weekday);
-        println!("{0}/{1}/WEEK{2}/{3}", year, m, weekNo, filename);
-        // calculate week in month
-        //let first_day_of_month = now.with_day(1).unwrap().weekday();
-        //let days_since_month_start = day_of_month - 1;
+        let file_path = format!("{0}/{1}/WEEK{2}", year, m, weekNo);
+        println!("{0}/{1}", file_path, filename);
+
+        let home = home_dir().unwrap().to_str().unwrap().to_string();
+
+        match daily_notes_config.dir {
+            Some(d) => {
+                println!("config dir is: {:?}", d);
+                let true_path = d[..].replace("~", &home[..]);
+                println!("{}", true_path);
+                fs::create_dir_all(format!("{0}/{1}", true_path, file_path)).unwrap();
+            }
+            None => {
+                println!("config dir not found");
+            }
+        }
     }
 
     fn handle_arg(arg: Option<&String>) -> Option<DailyNotesMode> {
