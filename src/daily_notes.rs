@@ -1,4 +1,4 @@
-use chrono::{Datelike, Local, Timelike};
+use chrono::{Datelike, Duration, Local, NaiveDate, Weekday};
 use home::home_dir;
 use serde_derive::{Deserialize, Serialize};
 use std::{collections::HashMap, fs};
@@ -44,7 +44,7 @@ impl DailyNotes {
 
         let filename = format!("{0}{1}{2}-{3}", year - 2000, month, day_of_month, weekday);
         let file_path = format!("{0}/{1}/WEEK{2}", year, m, weekNo);
-        println!("{0}/{1}", file_path, filename);
+        let actual_file_path = format!("{0}/{1}.md", file_path, filename);
 
         let home = home_dir().unwrap().to_str().unwrap().to_string();
 
@@ -54,6 +54,8 @@ impl DailyNotes {
                 let true_path = d[..].replace("~", &home[..]);
                 println!("{}", true_path);
                 fs::create_dir_all(format!("{0}/{1}", true_path, file_path)).unwrap();
+                fs::File::create(format!("{0}/{1}", true_path, actual_file_path)).unwrap();
+                //let mut file = fs::File::create(format!())?;
             }
             None => {
                 println!("config dir not found");
@@ -91,5 +93,18 @@ impl DailyNotes {
                 return Some(DailyNotesMode::Today);
             }
         };
+    }
+
+    fn last_work_day(today: &NaiveDate) -> NaiveDate {
+        let days_to_subtract = match today.weekday() {
+            Weekday::Mon => 3,
+            Weekday::Tue => 1,
+            Weekday::Wed => 1,
+            Weekday::Thu => 1,
+            Weekday::Fri => 1,
+            Weekday::Sat => 2,
+            Weekday::Sun => 3,
+        };
+        return today - Duration::days(days_to_subtract);
     }
 }
