@@ -24,7 +24,7 @@ impl TemplateFile {
         Ok(())
     }
 
-    pb fn retrieve_template_file() -> TemplateFile {
-        
+    pub fn retrieve_template_file() -> TemplateFile {
+           
     }
 }
